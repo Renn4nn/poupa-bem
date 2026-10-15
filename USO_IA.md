@@ -12,4 +12,4 @@ Nessa área escondida poderia ter:
 - acesso aos números 180 e 190;
 - uma opção para sair rapidamente e voltar para a tela de finanças.
 Somos 4 pessoas no grupo, então precisamos pensar em pelo menos 4 CRUDs para dividir entre os integrantes.
-Me ajude a organizar essa ideia de forma simples, falando sobre o objetivo do aplicativo, principais funcionalidades, possíveis telas e como poderíamos dividir os CRUDs entre os integrantes.
+Me ajude a organizar essa ideia de forma simples, falando sobre o objetivo do aplicativo, principais funcionalidades, possíveis telas e como poderíamos dividir os CRUDs entre os integrantes do projeto.
