@@ -59,7 +59,7 @@ export default function Pin({ navigation }) {
           <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>0</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Principal')}>
             <Text style={styles.buttonText}>←</Text>
           </TouchableOpacity>
         </View>

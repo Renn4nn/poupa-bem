@@ -5,6 +5,7 @@ O tema do projeto é violência contra a mulher e precisamos desenvolver um apli
 Pensei em fazer um aplicativo disfarçado de outra coisa para que, caso outra pessoa pegue o celular, não perceba que é um aplicativo de apoio para mulheres em situação de violência.
 A ideia seria ele parecer um aplicativo de controle financeiro, mostrando saldo, gastos, receitas e movimentações. Mas teria alguma forma escondida de acessar uma segunda parte do aplicativo, talvez segurando o saldo por alguns segundos e colocando um PIN.
 Nessa área escondida poderia ter:
+
 - cadastro de contatos de confiança;
 - registro de ocorrências;
 - perfil da usuária;
@@ -21,3 +22,11 @@ Ferramenta: Claude
 Preciso fazer as telas do meu CRUD, que é o Perfil da Usuária, pra Entrega 2. O pessoal vai fazer a fachada e o Drawer, então eu fico só com o perfil: uma tela pra mostrar os dados e outra pra editar. Ainda é com dados fictícios porque a API só entra na Entrega 4. Tem que seguir a tabela USUARIA do nosso DER e o PIN não pode aparecer em texto puro.
 
 Como foi: eu defini o que o perfil precisava ter a partir do DER e da divisão do grupo. O Claude montou a primeira versão das telas (`src/pages/perfil/`), do `PerfilStack` e dos dados fictícios (`src/mocks/usuaria.js`), e eu revisei o código e conferi se o PIN nunca aparece. A validação do formulário (nome, e-mail e PIN de 4 números) foi testada no navegador.
+
+## Entrega 2 - Tela de contatos emergenciais (Renan)
+
+Ferramenta: Codex
+
+Preciso começar meu CRUD de contatos emergenciais para a Entrega 2 seguindo a organização que o João usou no perfil. Crie uma pasta própria para as telas, mas faça por enquanto só uma tela de lista com dados fictícios. A aba deve aparecer como **Pagamentos** para manter a fachada financeira. Crie um Stack para essa tela e conecte-o às abas de Início e Perfil, com ícones Ionicons. Deixe Home e PIN diretamente em `src/pages/`, sem adicionar outras funções ao CRUD nesta etapa.
+
+Usei a estrutura do `PerfilStack` como referência para criar `src/navigation/ContatosStack.js`, `src/pages/contatos/ListaContatos.js` e `src/mocks/contatos.js`. A lista usa apenas dados fictícios. A navegação de Início, Pagamentos e Perfil foi reunida em `RootNavigation.js`. O aplicativo foi empacotado para web e Android após as alterações.
