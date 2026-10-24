@@ -13,3 +13,11 @@ Nessa área escondida poderia ter:
 - uma opção para sair rapidamente e voltar para a tela de finanças.
 Somos 4 pessoas no grupo, então precisamos pensar em pelo menos 4 CRUDs para dividir entre os integrantes.
 Me ajude a organizar essa ideia de forma simples, falando sobre o objetivo do aplicativo, principais funcionalidades, possíveis telas e como poderíamos dividir os CRUDs entre os integrantes do projeto.
+
+## Entrega 2 - Telas do Perfil da Usuária (João)
+
+Ferramenta: Claude
+
+Preciso fazer as telas do meu CRUD, que é o Perfil da Usuária, pra Entrega 2. O pessoal vai fazer a fachada e o Drawer, então eu fico só com o perfil: uma tela pra mostrar os dados e outra pra editar. Ainda é com dados fictícios porque a API só entra na Entrega 4. Tem que seguir a tabela USUARIA do nosso DER e o PIN não pode aparecer em texto puro.
+
+Como foi: eu defini o que o perfil precisava ter a partir do DER e da divisão do grupo. O Claude montou a primeira versão das telas (`src/pages/perfil/`), do `PerfilStack` e dos dados fictícios (`src/mocks/usuaria.js`), e eu revisei o código e conferi se o PIN nunca aparece. A validação do formulário (nome, e-mail e PIN de 4 números) foi testada no navegador.
