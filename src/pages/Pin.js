@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function Pin() {
+export default function Pin({ navigation }) {
   return (
     <View style={styles.container}>
+
+      <Image source={require('../assets/poupa-bem-logo.png')} style={{width: 120, height: 120}}/>
       {/* Título */}
       <Text style={styles.title}>Código de verificação</Text>
 
@@ -58,7 +59,7 @@ export default function Pin() {
           <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>0</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
             <Text style={styles.buttonText}>←</Text>
           </TouchableOpacity>
         </View>
@@ -70,7 +71,7 @@ export default function Pin() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFBF7',
+    backgroundColor: '#FEFDFD',
     alignItems: 'center',
     justifyContent: 'center',
   },
