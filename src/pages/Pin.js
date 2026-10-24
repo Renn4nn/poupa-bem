@@ -59,11 +59,17 @@ export default function Pin({ navigation }) {
           <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>0</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Principal')}>
+          <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>←</Text>
           </TouchableOpacity>
         </View>
       </View>
+      <TouchableOpacity 
+        style={styles.forwardButton} 
+        onPress={() => navigation.navigate('Main')}
+      >
+        <Text style={styles.buttonText}>Avançar</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -108,5 +114,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2EEE3',
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
+  forwardButton: {
+    width: '100%',
+    maxWidth: 280,
+    height: 50,
+    backgroundColor: '#F2EEE3',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

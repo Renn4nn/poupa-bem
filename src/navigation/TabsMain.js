@@ -7,7 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 const Tab = createBottomTabNavigator();
 
-export default function TabsPrincipais() {
+export default function TabsMain() {
   return (
     <Tab.Navigator
       screenOptions={{
