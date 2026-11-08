@@ -1,5 +1,6 @@
 import ContatosStack from './ContatosStack';
 import PerfilStack from './PerfilStack';
+import OcorrenciasStack from './OcorrenciasStack';
 import Home from '../pages/Home';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -33,6 +34,16 @@ export default function TabsMain() {
           title:'Pix e Pagamentos',
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? 'card' : 'card-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Anotacoes"
+        component={OcorrenciasStack}
+        options={{
+          title: 'Anotações',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={size} color={color} />
           ),
         }}
       />
