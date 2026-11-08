@@ -30,3 +30,11 @@ Ferramenta: Codex
 Preciso começar meu CRUD de contatos emergenciais para a Entrega 2 seguindo a organização que o João usou no perfil. Crie uma pasta própria para as telas, mas faça por enquanto só uma tela de lista com dados fictícios. A aba deve aparecer como **Pagamentos** para manter a fachada financeira. Crie um Stack para essa tela e conecte-o às abas de Início e Perfil, com ícones Ionicons. Deixe Home e PIN diretamente em `src/pages/`, sem adicionar outras funções ao CRUD nesta etapa.
 
 Usei a estrutura do `PerfilStack` como referência para criar `src/navigation/ContatosStack.js`, `src/pages/contatos/ListaContatos.js` e `src/mocks/contatos.js`. A lista usa apenas dados fictícios. A navegação de Início, Pagamentos e Perfil foi reunida em `RootNavigation.js`. O aplicativo foi empacotado para web e Android após as alterações.
+
+## Entrega 4 - CRUD Diário de Ocorrências (Alisson)
+
+Ferramenta: Claude
+
+Preciso fazer o meu CRUD, que é o Diário de Ocorrências, seguindo a mesma organização do perfil (João) e dos contatos (Renan). Tem que ter criar, listar, ver, editar e excluir, com dados fictícios e relacionamento com a usuária. Como ainda não temos API, quero que as telas chamem um serviço separado, para depois só trocar por chamadas à API. A aba precisa manter a fachada financeira e os números 180 e 190 precisam aparecer.
+
+Como foi: eu defini o CRUD e as regras (tipos de violência da Lei Maria da Penha, data não pode ser no futuro, descrição obrigatória). O Claude montou a primeira versão do serviço (`src/services/ocorrenciasService.js`), das telas (`src/pages/ocorrencias/`), do `OcorrenciasStack`, dos dados fictícios (`src/mocks/ocorrencias.js`) e das funções de data (`src/utils/datas.js`). A aba aparece como **Anotações** para manter o disfarce. Eu revisei o código, entendi cada parte e testei o fluxo completo (criar, listar, ver, editar e excluir) no navegador.
