@@ -38,3 +38,11 @@ Ferramenta: Claude
 Preciso fazer o meu CRUD, que é o Diário de Ocorrências, seguindo a mesma organização do perfil (João) e dos contatos (Renan). Tem que ter criar, listar, ver, editar e excluir, com dados fictícios e relacionamento com a usuária. Como ainda não temos API, quero que as telas chamem um serviço separado, para depois só trocar por chamadas à API. A aba precisa manter a fachada financeira e os números 180 e 190 precisam aparecer.
 
 Como foi: eu defini o CRUD e as regras (tipos de violência da Lei Maria da Penha, data não pode ser no futuro, descrição obrigatória). O Claude montou a primeira versão do serviço (`src/services/ocorrenciasService.js`), das telas (`src/pages/ocorrencias/`), do `OcorrenciasStack`, dos dados fictícios (`src/mocks/ocorrencias.js`) e das funções de data (`src/utils/datas.js`). A aba aparece como **Anotações** para manter o disfarce. Eu revisei o código, entendi cada parte e testei o fluxo completo (criar, listar, ver, editar e excluir) no navegador.
+
+## Entrega 4 - CRUD Alertas/SOS (Gabriel)
+
+Ferramenta: Claude
+
+Preciso fazer o meu CRUD, que é Alertas/SOS, seguindo a mesma organização do perfil (João), dos contatos (Renan) e das ocorrências (Alisson). Tem que ter botão de SOS que envia a localização, histórico, detalhe, alteração de status e exclusão, com dados fictícios e relacionamento com a usuária e com o contato da Rede de Apoio. As telas chamam um serviço separado para depois trocar pela API.
+
+Como foi: eu defini o CRUD e as regras (SOS só dispara segurando 2 segundos, status Novo / Em atendimento / Concluído, contato avisado opcional). O Claude montou a primeira versão do serviço (`src/services/alertasService.js`), das telas (`src/pages/alertas/`), do `AlertasStack`, dos dados fictícios (`src/mocks/alertas.js`) e do utilitário de localização (`src/utils/localizacao.js`). A aba aparece como **Cofrinho** para manter o disfarce. Eu revisei o código, entendi cada parte e testei o fluxo no navegador.
