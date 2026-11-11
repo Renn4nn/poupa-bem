@@ -1,6 +1,7 @@
 import ContatosStack from './ContatosStack';
 import PerfilStack from './PerfilStack';
 import OcorrenciasStack from './OcorrenciasStack';
+import AlertasStack from './AlertasStack';
 import Home from '../pages/Home';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -44,6 +45,16 @@ export default function TabsMain() {
           title: 'Anotações',
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Cofrinho"
+        component={AlertasStack}
+        options={{
+          title: 'Cofrinho',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'wallet' : 'wallet-outline'} size={size} color={color} />
           ),
         }}
       />
