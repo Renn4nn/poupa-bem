@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const usuariasRotas = require('./rotas/usuarias');
+const alertasRotas = require('./rotas/alertas');
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get('/', (req, res) => {
 
 // Cada CRUD registra as suas rotas aqui
 app.use('/usuarias', usuariasRotas);
+app.use('/alertas', alertasRotas);
 
 // Nenhuma rota acima respondeu: 404
 app.use((req, res) => {
