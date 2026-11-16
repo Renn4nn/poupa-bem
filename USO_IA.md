@@ -51,6 +51,6 @@ Como foi: eu defini o CRUD e as regras (SOS só dispara segurando 2 segundos, st
 
 Ferramenta: Claude
 
-Preciso fazer a parte do back-end do meu CRUD, que é Alertas/SOS, seguindo o mesmo padrão que o João usou na API de usuárias (rota + controlador + tabela no schema). Tem que ter criar, listar, buscar, atualizar o status e excluir, com tratamento de erros e status HTTP, e a tabela ALERTA precisa ter latitude e longitude para o painel da delegacia.
+Pedi apoio da IA para fazer a parte do back-end do meu CRUD, que é Alertas/SOS, seguindo o mesmo padrão que o João usou na API de usuárias (rota + controlador + tabela no schema). O pedido foi para ter criar, listar, buscar, atualizar o status e excluir, com tratamento de erros e status HTTP, e a tabela ALERTA com latitude e longitude para o painel da delegacia.
 
 Como foi: eu defini as rotas e as regras (status Novo / Em atendimento / Concluído, localização opcional mas com latitude e longitude juntas, data/hora preenchida pela API no momento do SOS, filtro por usuária e por status para o painel). O Claude montou a primeira versão da tabela `alerta` em `api/database/schema.sql`, do controlador (`api/src/controladores/alertasController.js`) e das rotas (`api/src/rotas/alertas.js`), e registrou `/alertas` no `api/src/app.js`. Eu revisei o código e entendi cada parte. A FOREIGN KEY de `id_contato` para `contato_apoio` entra quando a tabela da Rede de Apoio for criada.
