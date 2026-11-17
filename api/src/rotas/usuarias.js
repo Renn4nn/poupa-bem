@@ -9,5 +9,7 @@ rotas.get('/:id', usuarias.buscar);
 rotas.post('/', usuarias.criar);
 rotas.put('/:id', usuarias.atualizar);
 rotas.delete('/:id', usuarias.excluir);
+rotas.get('/:id/resumo', usuarias.resumo);
+rotas.post('/:id/verificar-pin', usuarias.verificarPin);
 
 module.exports = rotas;

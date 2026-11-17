@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { usuariaMock } from '../../mocks/usuaria';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { buscarUsuaria, buscarResumo, excluirUsuaria } from '../../services/usuariaService';
 
 // Converte '2026-10-01' em '01/10/2026'
 function formatarData(data) {
@@ -7,19 +8,83 @@ function formatarData(data) {
   return `${dia}/${mes}/${ano}`;
 }
 
-export default function Perfil({ navigation, route }) {
-  // Se voltou da tela de edição, usa os dados editados; senão, o mock
-  const usuaria = route.params?.usuaria ?? usuariaMock;
+export default function Perfil({ navigation }) {
+  const [usuaria, setUsuaria] = useState(null);
+  const [resumo, setResumo] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+
+  async function carregar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      const dados = await buscarUsuaria();
+      setUsuaria(dados);
+      setResumo(dados ? await buscarResumo(dados.id_usuaria) : null);
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  // Busca de novo sempre que a tela aparece (inclusive ao voltar da edição)
+  useEffect(() => {
+    const remover = navigation.addListener('focus', carregar);
+    return remover;
+  }, [navigation]);
+
+  async function excluir() {
+    try {
+      await excluirUsuaria(usuaria.id_usuaria);
+      setUsuaria(null);
+      setResumo(null);
+    } catch (e) {
+      setErro(e.message);
+    }
+  }
 
   function confirmarExclusao() {
-    Alert.alert(
-      'Excluir conta',
-      'Tem certeza? Todos os seus dados de apoio serão apagados.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        // Na Entrega 4 este botão vai chamar DELETE /usuarias/:id
-        { text: 'Excluir', style: 'destructive', onPress: () => Alert.alert('Conta excluída (simulação)') },
-      ]
+    const mensagem = 'Tem certeza? Todos os seus dados de apoio serão apagados.';
+    // No navegador o Alert não mostra botões, então usamos window.confirm
+    if (Platform.OS === 'web') {
+      if (window.confirm(mensagem)) excluir();
+      return;
+    }
+    Alert.alert('Excluir conta', mensagem, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: excluir },
+    ]);
+  }
+
+  if (carregando) {
+    return (
+      <View style={styles.centro}>
+        <ActivityIndicator size="large" color="#1A1A1A" />
+      </View>
+    );
+  }
+
+  if (erro !== '') {
+    return (
+      <View style={styles.centro}>
+        <Text style={styles.erro}>{erro}</Text>
+        <TouchableOpacity style={styles.botaoEditar} onPress={carregar}>
+          <Text style={styles.botaoEditarText}>Tentar de novo</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Perfil não existe (foi excluído ou ainda não foi criado)
+  if (!usuaria) {
+    return (
+      <View style={styles.centro}>
+        <Text style={styles.nome}>Nenhum perfil cadastrado</Text>
+        <TouchableOpacity style={styles.botaoEditar} onPress={() => navigation.navigate('EditarPerfil')}>
+          <Text style={styles.botaoEditarText}>Criar perfil</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -42,6 +107,10 @@ export default function Perfil({ navigation, route }) {
 
         <Text style={styles.label}>Cadastrada em</Text>
         <Text style={styles.valor}>{formatarData(usuaria.data_cadastro)}</Text>
+
+        {/* Vem do relacionamento USUARIA 1:N ALERTA, contado pela API */}
+        <Text style={styles.label}>Alertas enviados</Text>
+        <Text style={styles.valor}>{resumo?.total_alertas ?? 0}</Text>
       </View>
 
       <TouchableOpacity
@@ -71,6 +140,19 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
     padding: 24,
+  },
+  centro: {
+    flex: 1,
+    backgroundColor: '#FEFDFD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  erro: {
+    color: '#C62828',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   avatar: {
     width: 96,
