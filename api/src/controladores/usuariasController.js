@@ -116,4 +116,41 @@ async function excluir(req, res) {
   res.status(204).end();
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir };
+// GET /usuarias/:id/resumo
+// Relacionamento USUARIA 1:N ALERTA: conta os alertas ligados à usuária.
+// Quando as tabelas de contatos e ocorrências existirem, as contagens delas entram aqui.
+async function resumo(req, res) {
+  const id = lerId(req);
+  if (!id) return res.status(400).json({ erro: 'Id inválido.' });
+
+  const [linhas] = await db.query(
+    `SELECT u.id_usuaria,
+            (SELECT COUNT(*) FROM alerta a WHERE a.id_usuaria = u.id_usuaria) AS total_alertas
+       FROM usuaria u
+      WHERE u.id_usuaria = ?`,
+    [id]
+  );
+  if (linhas.length === 0) return res.status(404).json({ erro: 'Usuária não encontrada.' });
+
+  res.json(linhas[0]);
+}
+
+// POST /usuarias/:id/verificar-pin  { pin }
+// Compara o PIN digitado com o hash salvo; o hash nunca sai da API.
+async function verificarPin(req, res) {
+  const id = lerId(req);
+  if (!id) return res.status(400).json({ erro: 'Id inválido.' });
+
+  const { pin } = req.body ?? {};
+  if (typeof pin !== 'string' || !/^\d{4}$/.test(pin)) {
+    return res.status(400).json({ erro: 'O PIN deve ter 4 números.' });
+  }
+
+  const [linhas] = await db.query('SELECT pin_hash FROM usuaria WHERE id_usuaria = ?', [id]);
+  if (linhas.length === 0) return res.status(404).json({ erro: 'Usuária não encontrada.' });
+
+  const valido = await bcrypt.compare(pin, linhas[0].pin_hash);
+  res.json({ valido });
+}
+
+module.exports = { listar, buscar, criar, atualizar, excluir, resumo, verificarPin };
