@@ -3,19 +3,34 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native
 import { listarAlertas } from '../../services/alertasService';
 import { dataHoraTela, localizacaoTela } from '../../utils/localizacao';
 import { corStatus } from '../../mocks/alertas';
+import { Carregando, ErroTela } from '../../components/EstadoTela';
 
 export default function ListaAlertas({ navigation }) {
   const [alertas, setAlertas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+
+  async function carregar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      setAlertas(await listarAlertas());
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   // Recarrega a lista sempre que a tela volta a aparecer
   // (depois de enviar um SOS, mudar o status ou excluir)
   useEffect(() => {
-    async function carregar() {
-      setAlertas(await listarAlertas());
-    }
     const remover = navigation.addListener('focus', carregar);
     return remover;
   }, [navigation]);
+
+  if (carregando) return <Carregando />;
+  if (erro !== '') return <ErroTela mensagem={erro} onTentar={carregar} />;
 
   return (
     <View style={styles.container}>
