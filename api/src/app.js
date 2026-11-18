@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const usuariasRotas = require('./rotas/usuarias');
@@ -8,7 +9,7 @@ const ocorrenciasRotas = require('./rotas/ocorrencias');
 const app = express();
 
 app.use(cors()); // permite o app (Expo Web/celular) chamar a API
-app.use(express.json()); // lÍ o corpo das requisiÁıes em JSON
+app.use(express.json()); // l√™ o corpo das requisi√ß√µes em JSON
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', api: 'PoupaBem' });
@@ -20,15 +21,21 @@ app.use('/alertas', alertasRotas);
 app.use('/contatos', contatosRotas);
 app.use('/ocorrencias', ocorrenciasRotas);
 
-// Nenhuma rota acima respondeu: 404
-app.use((req, res) => {
-  res.status(404).json({ erro: 'Rota n„o encontrada.' });
+// Painel web da delegacia: p√°gina est√°tica em api/public/painel.html
+// Abrir em http://localhost:3000/painel
+app.get('/painel', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'painel.html'));
 });
 
-// Erros n„o tratados nos controladores caem aqui (o Express 5 j· captura erros de funÁıes async)
+// Nenhuma rota acima respondeu: 404
+app.use((req, res) => {
+  res.status(404).json({ erro: 'Rota n√£o encontrada.' });
+});
+
+// Erros n√£o tratados nos controladores caem aqui (o Express 5 j√° captura erros de fun√ß√µes async)
 app.use((err, req, res, next) => {
   if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({ erro: 'JSON inv·lido no corpo da requisiÁ„o.' });
+    return res.status(400).json({ erro: 'JSON inv√°lido no corpo da requisi√ß√£o.' });
   }
   console.error(err);
   res.status(500).json({ erro: 'Erro interno no servidor.' });
