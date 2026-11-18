@@ -2,7 +2,8 @@ import ContatosStack from './ContatosStack';
 import PerfilStack from './PerfilStack';
 import OcorrenciasStack from './OcorrenciasStack';
 import AlertasStack from './AlertasStack';
-import Home from '../pages/Home';
+import InicioApoio from '../pages/InicioApoio';
+import { opcoesHeader } from './opcoesHeader';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -20,8 +21,10 @@ export default function TabsMain() {
     >
       <Tab.Screen
         name="Inicio"
-        component={Home}
+        component={InicioApoio}
         options={{
+          ...opcoesHeader,
+          headerShown: true,
           title: 'Início',
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
