@@ -2,28 +2,49 @@ import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { buscarAlerta, atualizarStatusAlerta, excluirAlerta } from '../../services/alertasService';
 import { statusAlerta, corStatus } from '../../mocks/alertas';
-import { contatosMock } from '../../mocks/contatos';
 import { dataHoraTela, localizacaoTela } from '../../utils/localizacao';
+import { Carregando, ErroTela } from '../../components/EstadoTela';
 
 export default function DetalheAlerta({ navigation, route }) {
   const { id } = route.params;
   const [alerta, setAlerta] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+
+  async function carregar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      const dados = await buscarAlerta(id);
+      if (!dados) setErro('Alerta não encontrado.');
+      setAlerta(dados);
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   useEffect(() => {
-    async function carregar() {
-      setAlerta(await buscarAlerta(id));
-    }
     carregar();
   }, [id]);
 
   // Update do CRUD: o que muda num alerta é o status
   async function mudarStatus(novoStatus) {
-    setAlerta(await atualizarStatusAlerta(id, novoStatus));
+    try {
+      setAlerta(await atualizarStatusAlerta(id, novoStatus));
+    } catch (e) {
+      setErro(e.message);
+    }
   }
 
   async function excluir() {
-    await excluirAlerta(id);
-    navigation.goBack();
+    try {
+      await excluirAlerta(id);
+      navigation.goBack();
+    } catch (e) {
+      setErro(e.message);
+    }
   }
 
   function confirmarExclusao() {
@@ -42,15 +63,8 @@ export default function DetalheAlerta({ navigation, route }) {
     );
   }
 
-  if (!alerta) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.valor}>Carregando...</Text>
-      </View>
-    );
-  }
-
-  const contato = contatosMock.find((c) => c.id_contato === alerta.id_contato);
+  if (carregando) return <Carregando />;
+  if (erro !== '') return <ErroTela mensagem={erro} onTentar={carregar} />;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -62,7 +76,7 @@ export default function DetalheAlerta({ navigation, route }) {
         <Text style={styles.valor}>{localizacaoTela(alerta.latitude, alerta.longitude)}</Text>
 
         <Text style={styles.label}>Contato avisado</Text>
-        <Text style={styles.valor}>{contato ? contato.nome : '—'}</Text>
+        <Text style={styles.valor}>{alerta.nome_contato ?? '—'}</Text>
 
         <Text style={styles.label}>Status</Text>
         <Text style={[styles.valor, { color: corStatus[alerta.status], fontWeight: 'bold' }]}>

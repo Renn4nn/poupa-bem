@@ -14,6 +14,7 @@ export default function FormOcorrencia({ navigation, route }) {
   const [local, setLocal] = useState('');
   const [descricao, setDescricao] = useState('');
   const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({ title: editando ? 'Editar anotação' : 'Nova anotação' });
@@ -23,12 +24,16 @@ export default function FormOcorrencia({ navigation, route }) {
   useEffect(() => {
     if (!editando) return;
     async function carregar() {
-      const o = await buscarOcorrencia(id);
-      if (!o) return;
-      setData(paraTela(o.data));
-      setTipo(o.tipo);
-      setLocal(o.local);
-      setDescricao(o.descricao);
+      try {
+        const o = await buscarOcorrencia(id);
+        if (!o) return setErro('Anotação não encontrada.');
+        setData(paraTela(o.data));
+        setTipo(o.tipo);
+        setLocal(o.local ?? ''); // no banco o local vazio fica NULL
+        setDescricao(o.descricao);
+      } catch (e) {
+        setErro(e.message);
+      }
     }
     carregar();
   }, [editando, id]);
@@ -55,12 +60,19 @@ export default function FormOcorrencia({ navigation, route }) {
       descricao: descricao.trim(),
     };
 
-    if (editando) {
-      await atualizarOcorrencia(id, dados);
-    } else {
-      await criarOcorrencia(dados);
+    setSalvando(true);
+    try {
+      if (editando) {
+        await atualizarOcorrencia(id, dados); // PUT /ocorrencias/:id
+      } else {
+        await criarOcorrencia(dados); // POST /ocorrencias
+      }
+      navigation.goBack(); // a lista recarrega da API ao voltar
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setSalvando(false);
     }
-    navigation.goBack();
   }
 
   return (
@@ -113,8 +125,12 @@ export default function FormOcorrencia({ navigation, route }) {
         <TouchableOpacity style={styles.botaoCancelar} onPress={() => navigation.goBack()}>
           <Text style={styles.botaoCancelarText}>Cancelar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.botaoSalvar} onPress={salvar}>
-          <Text style={styles.botaoSalvarText}>Salvar</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && { opacity: 0.6 }]}
+          onPress={salvar}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarText}>{salvando ? 'Salvando...' : 'Salvar'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
