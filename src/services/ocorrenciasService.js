@@ -1,44 +1,38 @@
-import { ocorrenciasMock } from '../mocks/ocorrencias';
-import { usuariaMock } from '../mocks/usuaria';
+import { requisicao } from './api';
+import { getIdUsuaria } from './usuariaService';
 
-// As telas usam só estas funções para mexer nas ocorrências.
-// Na Entrega 4 cada uma vira uma chamada à API (por isso já são async).
+// As telas usam só estas funções para mexer nas ocorrências;
+// cada uma chama uma rota de /ocorrencias na API.
 
-let ocorrencias = [...ocorrenciasMock];
-let proximoId = ocorrencias.length + 1;
-
-// GET /usuarias/:id/ocorrencias
-export async function listarOcorrencias(idUsuaria = usuariaMock.id_usuaria) {
-  return ocorrencias
-    .filter((o) => o.id_usuaria === idUsuaria)
-    .sort((a, b) => b.data.localeCompare(a.data));
+// GET /ocorrencias?id_usuaria=1  (a API já devolve da mais recente para a mais antiga)
+export async function listarOcorrencias(idUsuaria = getIdUsuaria()) {
+  return requisicao(`/ocorrencias?id_usuaria=${idUsuaria}`);
 }
 
-// GET /ocorrencias/:id
+// GET /ocorrencias/:id  -> devolve null se não existe (404)
 export async function buscarOcorrencia(id) {
-  return ocorrencias.find((o) => o.id_ocorrencia === id) ?? null;
+  try {
+    return await requisicao(`/ocorrencias/${id}`);
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
 }
 
-// POST /ocorrencias
+// POST /ocorrencias  { id_usuaria, data, tipo, local, descricao }
 export async function criarOcorrencia(dados) {
-  const nova = {
-    ...dados,
-    id_ocorrencia: proximoId++,
-    id_usuaria: usuariaMock.id_usuaria,
-  };
-  ocorrencias.push(nova);
-  return nova;
+  return requisicao('/ocorrencias', {
+    method: 'POST',
+    body: JSON.stringify({ ...dados, id_usuaria: getIdUsuaria() }),
+  });
 }
 
 // PUT /ocorrencias/:id
 export async function atualizarOcorrencia(id, dados) {
-  ocorrencias = ocorrencias.map((o) =>
-    o.id_ocorrencia === id ? { ...o, ...dados } : o
-  );
-  return buscarOcorrencia(id);
+  return requisicao(`/ocorrencias/${id}`, { method: 'PUT', body: JSON.stringify(dados) });
 }
 
 // DELETE /ocorrencias/:id
 export async function excluirOcorrencia(id) {
-  ocorrencias = ocorrencias.filter((o) => o.id_ocorrencia !== id);
+  await requisicao(`/ocorrencias/${id}`, { method: 'DELETE' });
 }

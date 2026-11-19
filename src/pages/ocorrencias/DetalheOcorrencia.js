@@ -2,23 +2,41 @@ import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { buscarOcorrencia, excluirOcorrencia } from '../../services/ocorrenciasService';
 import { paraTela } from '../../utils/datas';
+import { Carregando, ErroTela } from '../../components/EstadoTela';
 
 export default function DetalheOcorrencia({ navigation, route }) {
   const { id } = route.params;
   const [ocorrencia, setOcorrencia] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+
+  async function carregar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      const dados = await buscarOcorrencia(id);
+      if (!dados) setErro('Anotação não encontrada.');
+      setOcorrencia(dados);
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   // Recarrega ao voltar da edição, para mostrar os dados novos
   useEffect(() => {
-    async function carregar() {
-      setOcorrencia(await buscarOcorrencia(id));
-    }
     const remover = navigation.addListener('focus', carregar);
     return remover;
   }, [navigation, id]);
 
   async function excluir() {
-    await excluirOcorrencia(id);
-    navigation.goBack();
+    try {
+      await excluirOcorrencia(id);
+      navigation.goBack();
+    } catch (e) {
+      setErro(e.message);
+    }
   }
 
   function confirmarExclusao() {
@@ -37,13 +55,8 @@ export default function DetalheOcorrencia({ navigation, route }) {
     );
   }
 
-  if (!ocorrencia) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.valor}>Carregando...</Text>
-      </View>
-    );
-  }
+  if (carregando) return <Carregando />;
+  if (erro !== '') return <ErroTela mensagem={erro} onTentar={carregar} />;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>

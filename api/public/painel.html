@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de alertas - PoupaBem</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #FEFDFD; color: #1A1A1A; }
+    header { background: #1A1A1A; color: #F5B700; padding: 16px 24px; }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 4px 0 0; color: #FEFDFD; font-size: 13px; }
+    main { padding: 24px; }
+    .info { color: #6B6B6B; font-size: 13px; margin-bottom: 12px; }
+    .erro { color: #C62828; font-weight: bold; }
+    .tabela { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #F2EEE3; border-radius: 8px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #D1CDC7; font-size: 14px; }
+    th { background: #E6E0D2; }
+    tr.novo td { background: #FDECEA; }
+    select { padding: 4px; font-size: 14px; }
+    .aviso { margin-top: 20px; font-size: 12px; color: #6B6B6B; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Painel de alertas SOS</h1>
+    <p>Protótipo acadêmico (Projeto Integrador). Todos os dados são fictícios.</p>
+  </header>
+
+  <main>
+    <p class="info">Atualiza sozinho a cada 5 segundos. <span id="estado"></span></p>
+
+    <div class="tabela">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Usuária</th>
+            <th>Data e hora</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="linhas"></tbody>
+      </table>
+    </div>
+
+    <p class="aviso">
+      O painel só mostra os alertas e permite mudar o status do atendimento.
+      Nada é enviado automaticamente à polícia.
+    </p>
+  </main>
+
+  <script>
+    // Mesmos status da API e do app
+    const STATUS = ['Novo', 'Em atendimento', 'Concluído'];
+    const linhas = document.getElementById('linhas');
+    const estado = document.getElementById('estado');
+
+    // '2026-11-10T19:05:00' -> '10/11/2026 19:05'
+    function dataHora(texto) {
+      const [data, hora] = texto.split('T');
+      const [ano, mes, dia] = data.split('-');
+      return `${dia}/${mes}/${ano} ${hora.slice(0, 5)}`;
+    }
+
+    function coordenada(valor) {
+      return valor == null ? '—' : valor.toFixed(5);
+    }
+
+    // Monta uma linha da tabela com textContent (assim nenhum texto vira HTML)
+    function linha(alerta) {
+      const tr = document.createElement('tr');
+      if (alerta.status === 'Novo') tr.className = 'novo';
+
+      const valores = [
+        alerta.id_alerta,
+        alerta.nome_usuaria,
+        dataHora(alerta.data_hora),
+        coordenada(alerta.latitude),
+        coordenada(alerta.longitude),
+      ];
+      for (const valor of valores) {
+        const td = document.createElement('td');
+        td.textContent = valor;
+        tr.appendChild(td);
+      }
+
+      // Status editável: ao trocar, envia PATCH /alertas/:id/status
+      const td = document.createElement('td');
+      const select = document.createElement('select');
+      for (const s of STATUS) {
+        const opcao = document.createElement('option');
+        opcao.value = s;
+        opcao.textContent = s;
+        opcao.selected = s === alerta.status;
+        select.appendChild(opcao);
+      }
+      select.addEventListener('change', () => mudarStatus(alerta.id_alerta, select.value));
+      td.appendChild(select);
+      tr.appendChild(td);
+
+      return tr;
+    }
+
+    // Busca os alertas na API e redesenha a tabela
+    async function carregar() {
+      // Não redesenha enquanto alguém está escolhendo um status
+      if (document.activeElement?.tagName === 'SELECT') return;
+      try {
+        const resposta = await fetch('/alertas');
+        if (!resposta.ok) throw new Error();
+        const alertas = await resposta.json();
+
+        linhas.replaceChildren(...alertas.map(linha));
+        if (alertas.length === 0) {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 6;
+          td.textContent = 'Nenhum alerta recebido.';
+          tr.appendChild(td);
+          linhas.appendChild(tr);
+        }
+        estado.className = '';
+        estado.textContent = `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+      } catch {
+        estado.className = 'erro';
+        estado.textContent = 'Sem conexão com a API. Tentando de novo...';
+      }
+    }
+
+    async function mudarStatus(id, status) {
+      try {
+        const resposta = await fetch(`/alertas/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        if (!resposta.ok) throw new Error();
+      } catch {
+        alert('Não foi possível mudar o status.');
+      }
+      document.activeElement?.blur();
+      carregar();
+    }
+
+    carregar();
+    setInterval(carregar, 5000); // polling: pergunta à API de 5 em 5 segundos
+  </script>
+</body>
+</html>

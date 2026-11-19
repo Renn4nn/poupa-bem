@@ -4,13 +4,17 @@ const db = require('../db');
 const STATUS = ['Novo', 'Em atendimento', 'Concluído'];
 
 // Colunas que saem da API. A data vai no mesmo formato que o app usa
-// ('2026-11-10T19:05:00') e o nome da usuária vem junto para o painel.
+// ('2026-11-10T19:05:00'); o nome da usuária (para o painel) e o do contato
+// avisado (para o detalhe no app) vêm junto.
 const CAMPOS = `
-  a.id_alerta, a.id_usuaria, u.nome AS nome_usuaria, a.id_contato,
+  a.id_alerta, a.id_usuaria, u.nome AS nome_usuaria, a.id_contato, c.nome AS nome_contato,
   DATE_FORMAT(a.data_hora, '%Y-%m-%dT%H:%i:%s') AS data_hora,
   a.tipo, a.status, a.latitude, a.longitude`;
 
-const ORIGEM = 'FROM alerta a JOIN usuaria u ON u.id_usuaria = a.id_usuaria';
+// LEFT JOIN no contato porque ele é opcional (o alerta pode não ter contato)
+const ORIGEM = `FROM alerta a
+  JOIN usuaria u ON u.id_usuaria = a.id_usuaria
+  LEFT JOIN contato_apoio c ON c.id_contato = a.id_contato`;
 
 // Converte um valor em id inteiro positivo; devolve null se não for válido
 function paraId(valor) {
@@ -104,9 +108,12 @@ async function criar(req, res) {
     );
     res.status(201).json(await buscarPorId(resultado.insertId));
   } catch (e) {
-    // A FOREIGN KEY recusou: não existe usuária com esse id
+    // Uma FOREIGN KEY recusou: não existe a usuária ou o contato com esse id
     if (e.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(404).json({ erro: 'Usuária não encontrada.' });
+      const erro = e.message.includes('fk_alerta_contato')
+        ? 'Contato não encontrado.'
+        : 'Usuária não encontrada.';
+      return res.status(404).json({ erro });
     }
     throw e;
   }

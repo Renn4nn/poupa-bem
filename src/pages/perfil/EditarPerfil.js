@@ -1,36 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { criarUsuaria, atualizarUsuaria } from '../../services/usuariaService';
 
 export default function EditarPerfil({ navigation, route }) {
-  const { usuaria } = route.params;
+  // Sem usuária nos parâmetros = criar perfil novo; com usuária = editar
+  const usuaria = route.params?.usuaria;
+  const criando = !usuaria;
 
   // Cada campo do formulário é um estado controlado (value + onChangeText)
-  const [nome, setNome] = useState(usuaria.nome);
-  const [email, setEmail] = useState(usuaria.email);
+  const [nome, setNome] = useState(usuaria?.nome ?? '');
+  const [email, setEmail] = useState(usuaria?.email ?? '');
   const [novoPin, setNovoPin] = useState('');
   const [confirmarPin, setConfirmarPin] = useState('');
   const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (criando) navigation.setOptions({ title: 'Criar perfil' });
+  }, [criando, navigation]);
 
   // Validação básica antes de salvar; devolve a mensagem de erro ou ''
+  // (a API valida de novo, mas assim a usuária vê o erro sem esperar a rede)
   function validar() {
     if (nome.trim() === '') return 'Informe o nome.';
     if (!email.includes('@')) return 'Informe um e-mail válido.';
-    // PIN é opcional: só valida se ela quiser trocar
-    if (novoPin !== '' || confirmarPin !== '') {
+    // Ao criar o PIN é obrigatório; ao editar, só valida se ela quiser trocar
+    if (criando || novoPin !== '' || confirmarPin !== '') {
       if (!/^\d{4}$/.test(novoPin)) return 'O PIN deve ter 4 números.';
       if (novoPin !== confirmarPin) return 'Os PINs não conferem.';
     }
     return '';
   }
 
-  function salvar() {
+  async function salvar() {
     const mensagem = validar();
     setErro(mensagem);
     if (mensagem !== '') return;
 
-    // Na Entrega 4 isto vira PUT /usuarias/:id (o PIN vai como hash no back-end).
-    // Por enquanto, devolve os dados editados para a tela de Perfil.
-    navigation.popTo('Perfil', { usuaria: { ...usuaria, nome: nome.trim(), email: email.trim() } });
+    const dados = { nome: nome.trim(), email: email.trim() };
+    if (novoPin !== '') dados.pin = novoPin; // o hash é feito na API
+
+    setSalvando(true);
+    try {
+      if (criando) {
+        await criarUsuaria(dados); // POST /usuarias
+      } else {
+        await atualizarUsuaria(usuaria.id_usuaria, dados); // PUT /usuarias/:id
+      }
+      navigation.goBack(); // o Perfil recarrega da API ao voltar
+    } catch (e) {
+      setErro(e.message); // ex.: e-mail já cadastrado (409) ou sem conexão
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -55,7 +77,9 @@ export default function EditarPerfil({ navigation, route }) {
         maxLength={120}
       />
 
-      <Text style={styles.label}>Novo PIN (deixe em branco para manter)</Text>
+      <Text style={styles.label}>
+        {criando ? 'PIN de acesso (4 números)' : 'Novo PIN (deixe em branco para manter)'}
+      </Text>
       <TextInput
         style={styles.input}
         value={novoPin}
@@ -65,7 +89,7 @@ export default function EditarPerfil({ navigation, route }) {
         maxLength={4}
       />
 
-      <Text style={styles.label}>Confirmar novo PIN</Text>
+      <Text style={styles.label}>Confirmar PIN</Text>
       <TextInput
         style={styles.input}
         value={confirmarPin}
@@ -82,8 +106,12 @@ export default function EditarPerfil({ navigation, route }) {
         <TouchableOpacity style={styles.botaoCancelar} onPress={() => navigation.goBack()}>
           <Text style={styles.botaoCancelarText}>Cancelar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.botaoSalvar} onPress={salvar}>
-          <Text style={styles.botaoSalvarText}>Salvar</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && { opacity: 0.6 }]}
+          onPress={salvar}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarText}>{salvando ? 'Salvando...' : 'Salvar'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

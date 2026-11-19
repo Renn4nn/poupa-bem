@@ -1,14 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { criarAlerta } from '../../services/alertasService';
 import { obterLocalizacao, dataHoraTela, localizacaoTela } from '../../utils/localizacao';
-import { contatosMock } from '../../mocks/contatos';
+import { listarContatos } from '../../services/contatosService';
 
 export default function AcionarSos({ navigation }) {
   const [idContato, setIdContato] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [ultimoAlerta, setUltimoAlerta] = useState(null);
   const [erro, setErro] = useState('');
+  const [contatos, setContatos] = useState([]);
+
+  // Contatos da Rede de Apoio para escolher quem avisar.
+  // Se a API falhar, a lista fica vazia e o SOS continua funcionando.
+  useEffect(() => {
+    async function carregarContatos() {
+      try {
+        setContatos(await listarContatos());
+      } catch {
+        setContatos([]);
+      }
+    }
+    const remover = navigation.addListener('focus', carregarContatos);
+    return remover;
+  }, [navigation]);
 
   // O botão só dispara segurando por 2 segundos, para evitar toque sem querer
   async function enviarSos() {
@@ -68,7 +83,7 @@ export default function AcionarSos({ navigation }) {
         >
           <Text style={[styles.opcaoText, idContato === null && styles.opcaoTextAtiva]}>Ninguém</Text>
         </TouchableOpacity>
-        {contatosMock.map((c) => (
+        {contatos.map((c) => (
           <TouchableOpacity
             key={c.id_contato}
             style={[styles.opcao, idContato === c.id_contato && styles.opcaoAtiva]}

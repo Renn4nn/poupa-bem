@@ -2,20 +2,34 @@ import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { listarOcorrencias } from '../../services/ocorrenciasService';
 import { paraTela } from '../../utils/datas';
+import { Carregando, ErroTela } from '../../components/EstadoTela';
 
 export default function ListaOcorrencias({ navigation }) {
   const [ocorrencias, setOcorrencias] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+
+  async function carregar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      setOcorrencias(await listarOcorrencias());
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   // Recarrega a lista sempre que a tela volta a aparecer
   // (depois de criar, editar ou excluir uma anotação)
   useEffect(() => {
-    async function carregar() {
-      const dados = await listarOcorrencias();
-      setOcorrencias(dados);
-    }
     const remover = navigation.addListener('focus', carregar);
     return remover;
   }, [navigation]);
+
+  if (carregando) return <Carregando />;
+  if (erro !== '') return <ErroTela mensagem={erro} onTentar={carregar} />;
 
   return (
     <View style={styles.container}>
