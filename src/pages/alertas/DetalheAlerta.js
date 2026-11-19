@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, Linking } from 'react-native';
 import { buscarAlerta, atualizarStatusAlerta, excluirAlerta } from '../../services/alertasService';
 import { statusAlerta, corStatus } from '../../constantes';
 import { dataHoraTela, localizacaoTela } from '../../utils/localizacao';
@@ -47,6 +47,13 @@ export default function DetalheAlerta({ navigation, route }) {
     }
   }
 
+  // Abre a localização do alerta no Google Maps (no celular abre o app de mapas;
+  // no navegador abre uma aba nova)
+  function abrirNoMapa() {
+    const url = `https://www.google.com/maps/search/?api=1&query=${alerta.latitude},${alerta.longitude}`;
+    Linking.openURL(url).catch(() => setErro('Não foi possível abrir o mapa.'));
+  }
+
   function confirmarExclusao() {
     // No navegador o Alert não mostra botões, então usamos window.confirm
     if (Platform.OS === 'web') {
@@ -74,6 +81,11 @@ export default function DetalheAlerta({ navigation, route }) {
 
         <Text style={styles.label}>Localização</Text>
         <Text style={styles.valor}>{localizacaoTela(alerta.latitude, alerta.longitude)}</Text>
+        {alerta.latitude != null && alerta.longitude != null && (
+          <TouchableOpacity style={styles.botaoMapa} onPress={abrirNoMapa}>
+            <Text style={styles.botaoMapaText}>Ver no mapa</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.label}>Contato avisado</Text>
         <Text style={styles.valor}>{alerta.nome_contato ?? '—'}</Text>
@@ -152,6 +164,20 @@ const styles = StyleSheet.create({
   },
   opcaoTextAtiva: {
     color: '#F5B700',
+  },
+  botaoMapa: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  botaoMapaText: {
+    color: '#F5B700',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   botaoExcluir: {
     borderWidth: 1,

@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { listarAlertas } from '../../services/alertasService';
 import { dataHoraTela, localizacaoTela } from '../../utils/localizacao';
-import { corStatus } from '../../constantes';
+import { corStatus, statusAlerta } from '../../constantes';
 import { Carregando, ErroTela } from '../../components/EstadoTela';
+
+// Opções do filtro: todos os alertas ou só os de um status
+const FILTROS = ['Todos', ...statusAlerta];
 
 export default function ListaAlertas({ navigation }) {
   const [alertas, setAlertas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+  const [filtro, setFiltro] = useState('Todos');
+  const [atualizando, setAtualizando] = useState(false);
 
   async function carregar() {
     setCarregando(true);
@@ -22,6 +27,19 @@ export default function ListaAlertas({ navigation }) {
     }
   }
 
+  // "Puxar para atualizar": busca de novo na API sem trocar a tela pelo carregando
+  async function atualizar() {
+    setAtualizando(true);
+    try {
+      setAlertas(await listarAlertas());
+      setErro('');
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setAtualizando(false);
+    }
+  }
+
   // Recarrega a lista sempre que a tela volta a aparecer
   // (depois de enviar um SOS, mudar o status ou excluir)
   useEffect(() => {
@@ -32,12 +50,41 @@ export default function ListaAlertas({ navigation }) {
   if (carregando) return <Carregando />;
   if (erro !== '') return <ErroTela mensagem={erro} onTentar={carregar} />;
 
+  // Lista mostrada de acordo com o filtro escolhido
+  const visiveis = filtro === 'Todos' ? alertas : alertas.filter((a) => a.status === filtro);
+
+  // Resumo: quantos alertas existem em cada status (ex.: "1 Novo · 2 Concluído")
+  const resumo = statusAlerta
+    .map((s) => ({ status: s, total: alertas.filter((a) => a.status === s).length }))
+    .filter((r) => r.total > 0)
+    .map((r) => `${r.total} ${r.status}`)
+    .join(' · ');
+
   return (
     <View style={styles.container}>
+      {resumo !== '' && <Text style={styles.resumo}>{resumo}</Text>}
+
+      <View style={styles.filtros}>
+        {FILTROS.map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filtro, filtro === f && styles.filtroAtivo]}
+            onPress={() => setFiltro(f)}
+          >
+            <Text style={[styles.filtroText, filtro === f && styles.filtroTextAtivo]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
-        data={alertas}
+        data={visiveis}
         keyExtractor={(item) => String(item.id_alerta)}
-        ListEmptyComponent={<Text style={styles.vazio}>Nenhum alerta enviado.</Text>}
+        refreshControl={<RefreshControl refreshing={atualizando} onRefresh={atualizar} />}
+        ListEmptyComponent={
+          <Text style={styles.vazio}>
+            {filtro === 'Todos' ? 'Nenhum alerta enviado.' : `Nenhum alerta "${filtro}".`}
+          </Text>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.cartao}
@@ -64,6 +111,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FEFDFD',
     padding: 24,
+  },
+  resumo: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  filtros: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  filtro: {
+    borderWidth: 1,
+    borderColor: '#D1CDC7',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  filtroAtivo: {
+    backgroundColor: '#1A1A1A',
+    borderColor: '#1A1A1A',
+  },
+  filtroText: {
+    color: '#1A1A1A',
+    fontSize: 13,
+  },
+  filtroTextAtivo: {
+    color: '#F5B700',
   },
   vazio: {
     textAlign: 'center',
