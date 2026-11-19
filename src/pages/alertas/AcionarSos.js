@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  View, Text, TouchableOpacity, Pressable, Animated, StyleSheet, ScrollView, ActivityIndicator,
+} from 'react-native';
 import { criarAlerta } from '../../services/alertasService';
 import { obterLocalizacao, dataHoraTela, localizacaoTela } from '../../utils/localizacao';
 import { listarContatos } from '../../services/contatosService';
@@ -10,6 +12,40 @@ export default function AcionarSos({ navigation }) {
   const [ultimoAlerta, setUltimoAlerta] = useState(null);
   const [erro, setErro] = useState('');
   const [contatos, setContatos] = useState([]);
+  const [segurando, setSegurando] = useState(false);
+
+  // Progresso do "segurar": 0 = acabou de apertar (vermelho escuro),
+  // 1 = completou os 2 segundos (vermelho normal). Parado, fica em 1.
+  const progresso = useRef(new Animated.Value(1)).current;
+
+  const corBotao = progresso.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#5C0F0F', '#C62828'],
+  });
+
+  // Ao apertar: o botão escurece e vai voltando ao vermelho normal em 2 s.
+  // Se a animação chegar ao fim (finished), a pessoa segurou o tempo todo: envia o SOS.
+  function aoApertar() {
+    if (enviando) return;
+    setSegurando(true);
+    progresso.setValue(0);
+    Animated.timing(progresso, {
+      toValue: 1,
+      duration: 2000,
+      useNativeDriver: false, // cor não roda no driver nativo
+    }).start(({ finished }) => {
+      setSegurando(false);
+      if (finished) enviarSos();
+    });
+  }
+
+  // Soltou antes dos 2 s: a animação é interrompida (finished = false)
+  // e o botão volta na hora para a cor normal, sem enviar nada.
+  function aoSoltar() {
+    progresso.stopAnimation();
+    progresso.setValue(1);
+    setSegurando(false);
+  }
 
   // Contatos da Rede de Apoio para escolher quem avisar.
   // Se a API falhar, a lista fica vazia e o SOS continua funcionando.
@@ -51,23 +87,37 @@ export default function AcionarSos({ navigation }) {
         Segure o botão por 2 segundos para enviar um alerta com a sua localização.
       </Text>
 
-      <TouchableOpacity
-        style={[styles.botaoSos, enviando && styles.botaoSosDesativado]}
-        onLongPress={enviarSos}
-        delayLongPress={2000}
-        disabled={enviando}
-      >
-        {enviando
-          ? <ActivityIndicator color="#FEFDFD" size="large" />
-          : <Text style={styles.botaoSosText}>SOS</Text>}
-      </TouchableOpacity>
+      <Pressable onPressIn={aoApertar} onPressOut={aoSoltar} disabled={enviando}>
+        <Animated.View
+          style={[
+            styles.botaoSos,
+            { backgroundColor: corBotao },
+            enviando && styles.botaoSosDesativado,
+          ]}
+        >
+          {enviando
+            ? <ActivityIndicator color="#FEFDFD" size="large" />
+            : <Text style={styles.botaoSosText}>SOS</Text>}
+        </Animated.View>
+      </Pressable>
+
+      <Text style={styles.dica}>
+        {segurando ? 'Continue segurando...' : 'Toque e segure'}
+      </Text>
 
       {ultimoAlerta && (
         <View style={styles.confirmacao}>
-          <Text style={styles.confirmacaoTitulo}>Alerta enviado</Text>
+          <Text style={styles.confirmacaoTitulo}>Alerta registrado</Text>
           <Text style={styles.confirmacaoTexto}>{dataHoraTela(ultimoAlerta.data_hora)}</Text>
           <Text style={styles.confirmacaoTexto}>
             {localizacaoTela(ultimoAlerta.latitude, ultimoAlerta.longitude)}
+          </Text>
+          {ultimoAlerta.nome_contato && (
+            <Text style={styles.confirmacaoTexto}>Contato marcado: {ultimoAlerta.nome_contato}</Text>
+          )}
+          <Text style={styles.confirmacaoNota}>
+            O alerta aparece no painel da central de atendimento. Neste protótipo,
+            nenhuma mensagem é enviada automaticamente ao contato.
           </Text>
         </View>
       )}
@@ -139,6 +189,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#C62828',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 8,
+  },
+  dica: {
+    fontSize: 13,
+    color: '#6B6B6B',
     marginBottom: 24,
   },
   botaoSosDesativado: {
@@ -165,6 +220,11 @@ const styles = StyleSheet.create({
   confirmacaoTexto: {
     fontSize: 14,
     color: '#1A1A1A',
+  },
+  confirmacaoNota: {
+    fontSize: 12,
+    color: '#6B6B6B',
+    marginTop: 8,
   },
   erro: {
     color: '#C62828',
