@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, Pressable, Animated, StyleSheet, ScrollView, ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { criarAlerta } from '../../services/alertasService';
 import { obterLocalizacao, dataHoraTela, localizacaoTela } from '../../utils/localizacao';
 import { listarContatos } from '../../services/contatosService';
+
+// No navegador, segurar o dedo/mouse em cima do texto "SOS" seleciona o texto e abre
+// o menu do navegador ("Copiar", "Pesquisar no Google"...). Isso cancela o toque e o
+// botão volta ao normal sem enviar. Estes estilos desligam a seleção e o menu de toque.
+const semSelecao = Platform.OS === 'web'
+  ? { userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none', touchAction: 'none' }
+  : {};
 
 export default function AcionarSos({ navigation }) {
   const [idContato, setIdContato] = useState(null);
@@ -17,6 +25,16 @@ export default function AcionarSos({ navigation }) {
   // Progresso do "segurar": 0 = acabou de apertar (vermelho escuro),
   // 1 = completou os 2 segundos (vermelho normal). Parado, fica em 1.
   const progresso = useRef(new Animated.Value(1)).current;
+  const botaoRef = useRef(null);
+
+  // No navegador, bloqueia o menu do botão direito / toque longo só em cima do botão
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !botaoRef.current) return undefined;
+    const no = botaoRef.current;
+    const bloquear = (e) => e.preventDefault();
+    no.addEventListener('contextmenu', bloquear);
+    return () => no.removeEventListener('contextmenu', bloquear);
+  }, []);
 
   const corBotao = progresso.interpolate({
     inputRange: [0, 1],
@@ -87,17 +105,24 @@ export default function AcionarSos({ navigation }) {
         Segure o botão por 2 segundos para enviar um alerta com a sua localização.
       </Text>
 
-      <Pressable onPressIn={aoApertar} onPressOut={aoSoltar} disabled={enviando}>
+      <Pressable
+        ref={botaoRef}
+        onPressIn={aoApertar}
+        onPressOut={aoSoltar}
+        disabled={enviando}
+        style={semSelecao}
+      >
         <Animated.View
           style={[
             styles.botaoSos,
+            semSelecao,
             { backgroundColor: corBotao },
             enviando && styles.botaoSosDesativado,
           ]}
         >
           {enviando
             ? <ActivityIndicator color="#FEFDFD" size="large" />
-            : <Text style={styles.botaoSosText}>SOS</Text>}
+            : <Text selectable={false} style={[styles.botaoSosText, semSelecao]}>SOS</Text>}
         </Animated.View>
       </Pressable>
 
