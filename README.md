@@ -21,7 +21,25 @@ Além dos CRUDs:
 - **180 e 190:** atalhos para ligar na aba Início da área de apoio. Nada é enviado automaticamente à polícia.
 - **Painel da delegacia:** página web em `http://localhost:3000/painel` que consulta os alertas a cada 5 segundos e permite mudar o status.
 
-> As telas acessam os dados apenas pelos serviços em `src/services/`, e cada serviço chama a API pelo `api.js`. Em `src/mocks/` ficaram só a usuária de teste (id 1) e as listas fixas (tipos de ocorrência e status de alerta). Todos os dados de teste são fictícios.
+> As telas acessam os dados apenas pelos serviços em `src/services/`, e cada serviço chama a API pelo `api.js`. Não há mais dados simulados no app: `src/constantes.js` guarda só o id da usuária de teste e as listas fixas (tipos de ocorrência e status de alerta). Todos os dados de teste do banco são fictícios.
+
+## Exigências da Entrega 4 e onde estão
+
+| Exigência | Onde está |
+| --- | --- |
+| Back-end (API) criado e no ar | `api/` – Node.js + Express 5 com MySQL (`npm start` em `api/`) |
+| Uma tabela por CRUD (4 integrantes) | `api/database/schema.sql` – `usuaria`, `contato_apoio`, `ocorrencia`, `alerta` |
+| Rotas RESTful de todas as operações | `api/src/rotas/` + `api/src/controladores/` (tabelas de rotas abaixo) |
+| Relacionamento real entre entidades | Chaves estrangeiras no banco: contatos, ocorrências e alertas pertencem à usuária (exclusão em cascata); o alerta aponta para o contato avisado (`SET NULL`). A API devolve 404 se o id relacionado não existe |
+| Erros com status HTTP adequados | 400 (dados inválidos), 404 (não encontrado), 409 (e-mail repetido), 500 (erro interno) |
+| PIN guardado com hash | `bcryptjs` em `usuariasController.js`; a API nunca devolve o `pin_hash` |
+| CRUDs integrados via API, sem dados simulados | `src/services/*Service.js` usam `src/services/api.js`; a pasta de mocks foi removida |
+| Estados de carregando e erro nas telas | `src/components/EstadoTela.js`, usado nas listas e detalhes |
+| Disfarce funcionando de ponta a ponta | `src/pages/Home.js` (segurar o saldo 3 s) → `src/pages/Pin.js` (PIN conferido pela API) |
+| Saída rápida em todas as telas, sem confirmação | `src/components/BotaoSaidaRapida.js` no `headerRight` de todos os stacks (`opcoesHeader.js`) |
+| Painel da delegacia em tempo real (polling) | `api/public/painel.html`, aberto em `/painel`: busca `GET /alertas` a cada 5 s e muda o status |
+| 180/190 e aviso de protótipo acadêmico | `src/pages/InicioApoio.js`, rodapés das telas de apoio e do Perfil |
+| Documentação atualizada | Este README e o `USO_IA.md` |
 
 ## Tecnologias
 
@@ -130,7 +148,6 @@ poupa-bem/
 ├── src/
 │   ├── assets/             # Imagens (logo)
 │   ├── components/         # Peças reaproveitadas (carregando/erro, botão de saída rápida)
-│   ├── mocks/              # Usuária de teste e listas fixas (tipos, status)
 │   ├── navigation/
 │   │   ├── RootNavigation.js   # Home (fachada) -> Pin -> abas principais
 │   │   ├── TabsMain.js         # Abas: Início, Pagamentos, Anotações, Cofrinho, Perfil
@@ -149,7 +166,8 @@ poupa-bem/
 │   │   ├── alertas/
 │   │   └── perfil/
 │   ├── services/           # Acesso aos dados; api.js faz as chamadas HTTP à API
-│   └── utils/              # Datas e localização
+│   ├── utils/              # Datas e localização
+│   └── constantes.js       # Usuária de teste e listas fixas (tipos, status)
 ├── android/ ios/           # Projetos nativos gerados pelo Expo
 ├── AGENTS.md               # Instruções para assistentes de IA
 └── USO_IA.md               # Registro do uso de IA em cada entrega
@@ -164,6 +182,20 @@ Cada CRUD segue a mesma organização:
 3. `src/services/<modulo>Service.js` – funções `async` que chamam a API com `requisicao` (`api.js`)
 4. `src/pages/<modulo>/` – telas, com carregando e erro (`components/EstadoTela.js`)
 5. `src/navigation/<Modulo>Stack.js` – stack com `screenOptions={opcoesHeader}`, registrado em `TabsMain.js` com nome de aba disfarçado
+
+## Roteiro para a apresentação
+
+1. **API no ar:** com o MySQL ligado, `npm start` em `api/` e abrir `http://localhost:3000/` (deve responder `{"status":"ok"}`).
+2. **Disfarce:** abrir o app e mostrar a tela de finanças. Um toque no saldo não faz nada; segurar por 3 segundos abre o PIN.
+3. **PIN:** digitar um código errado (aparece "Código incorreto") e depois `1234`. Comentar que a API compara com o hash bcrypt e o PIN nunca é salvo em texto.
+4. **CRUDs, um por integrante:**
+   - Perfil (João): editar o nome, trocar o PIN e mostrar o contador de alertas;
+   - Pix e Pagamentos (Renan): criar, editar e excluir um contato;
+   - Anotações (Alisson): criar, editar e excluir uma ocorrência;
+   - Cofrinho (Gabriel): segurar o SOS por 2 s escolhendo um contato, abrir o histórico e mudar o status.
+5. **Painel da delegacia:** abrir `http://localhost:3000/painel` lado a lado com o app, enviar um SOS e ver o alerta aparecer sozinho em até 5 segundos; mudar o status no painel e mostrar no detalhe do alerta no app.
+6. **Erros:** desligar a API e mostrar a mensagem "Sem conexão com o servidor" com o botão "Tentar de novo".
+7. **Saída rápida:** tocar no ícone do canto de qualquer tela e mostrar que o app volta para as finanças, sem confirmação e sem "voltar" para a área de apoio.
 
 ## Equipe
 

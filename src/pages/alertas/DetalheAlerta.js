@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { buscarAlerta, atualizarStatusAlerta, excluirAlerta } from '../../services/alertasService';
-import { statusAlerta, corStatus } from '../../mocks/alertas';
+import { statusAlerta, corStatus } from '../../constantes';
 import { dataHoraTela, localizacaoTela } from '../../utils/localizacao';
 import { Carregando, ErroTela } from '../../components/EstadoTela';
 

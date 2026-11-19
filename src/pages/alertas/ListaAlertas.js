@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { listarAlertas } from '../../services/alertasService';
 import { dataHoraTela, localizacaoTela } from '../../utils/localizacao';
-import { corStatus } from '../../mocks/alertas';
+import { corStatus } from '../../constantes';
 import { Carregando, ErroTela } from '../../components/EstadoTela';
 
 export default function ListaAlertas({ navigation }) {

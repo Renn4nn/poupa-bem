@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { buscarOcorrencia, criarOcorrencia, atualizarOcorrencia } from '../../services/ocorrenciasService';
-import { tiposOcorrencia } from '../../mocks/ocorrencias';
+import { tiposOcorrencia } from '../../constantes';
 import { paraTela, paraBanco, hojeTela } from '../../utils/datas';
 
 // Mesma tela para criar e editar: se recebeu um id, está editando
