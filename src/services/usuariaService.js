@@ -1,11 +1,11 @@
 import { requisicao } from './api';
-import { usuariaMock } from '../mocks/usuaria';
+import { ID_USUARIA_TESTE } from '../constantes';
 
 // As telas do Perfil usam só estas funções; cada uma chama uma rota de /usuarias.
 
 // Usuária que está usando o app. Começa na usuária de teste (id 1)
 // e muda quando um perfil novo é criado.
-let idUsuariaAtual = usuariaMock.id_usuaria;
+let idUsuariaAtual = ID_USUARIA_TESTE;
 
 export function getIdUsuaria() {
   return idUsuariaAtual;
