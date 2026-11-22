@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { FlatList, StyleSheet, Text, View, TouchableOpacity, Alert, Platform } from 'react-native';
 import { listarContatos } from '../../services/contatosService';
 import { Carregando, ErroTela } from '../../components/EstadoTela';
 
@@ -46,6 +46,11 @@ export default function ListaContatos({ navigation }) {
           // Tocar no contato abre o formulário já preenchido (editar/excluir)
           <TouchableOpacity
             style={styles.cartao}
+            delayLongPress={3000}
+            onLongPress={() => {
+              const msg = `Ligando para ${item.nome} \nTelefone: ${item.telefone}`;
+              Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Ligação', msg);
+            }}
             onPress={() => navigation.navigate('FormContato', { contato: item })}
           >
             <Text style={styles.nome}>{item.nome}</Text>
