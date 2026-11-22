@@ -4,7 +4,7 @@ import {
   Platform,
 } from 'react-native';
 import { criarAlerta } from '../../services/alertasService';
-import { obterLocalizacao, dataHoraTela, localizacaoTela } from '../../utils/localizacao';
+import { obterLocalizacao, dataHoraTela } from '../../utils/localizacao';
 import { listarContatos } from '../../services/contatosService';
 
 // No navegador, segurar o dedo/mouse em cima do código seleciona o conteúdo e abre
@@ -172,7 +172,7 @@ export default function AcionarSos({ navigation }) {
       });
       setUltimoAlerta(alerta);
     } catch {
-      setErro('Não foi possível enviar agora. Tente de novo ou ligue 190.');
+      setErro('Não foi possível gerar agora. Tente de novo ou ligue 190.');
     } finally {
       setEnviando(false);
     }
@@ -209,19 +209,18 @@ export default function AcionarSos({ navigation }) {
         {segurando ? 'Continue segurando...' : 'Chave aleatória · segure o código por 2 s'}
       </Text>
 
+      {/* Confirmação disfarçada de comprovante: quem olhar a tela não vê a
+          palavra "alerta". A localização fica no histórico (Detalhe). */}
       {ultimoAlerta && (
         <View style={styles.confirmacao}>
-          <Text style={styles.confirmacaoTitulo}>Alerta registrado</Text>
+          <Text style={styles.confirmacaoTitulo}>Comprovante gerado</Text>
           <Text style={styles.confirmacaoTexto}>{dataHoraTela(ultimoAlerta.data_hora)}</Text>
-          <Text style={styles.confirmacaoTexto}>
-            {localizacaoTela(ultimoAlerta.latitude, ultimoAlerta.longitude)}
-          </Text>
+          <Text style={styles.confirmacaoTexto}>Código: #{ultimoAlerta.id_alerta}</Text>
           {ultimoAlerta.nome_contato && (
-            <Text style={styles.confirmacaoTexto}>Contato marcado: {ultimoAlerta.nome_contato}</Text>
+            <Text style={styles.confirmacaoTexto}>Compartilhado com: {ultimoAlerta.nome_contato}</Text>
           )}
           <Text style={styles.confirmacaoNota}>
-            O alerta aparece no painel da central de atendimento. Neste protótipo,
-            nenhuma mensagem é enviada automaticamente ao contato.
+            Neste protótipo, nada é enviado automaticamente ao contato.
           </Text>
         </View>
       )}
@@ -229,7 +228,7 @@ export default function AcionarSos({ navigation }) {
       {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
 
       {/* Contato da Rede de Apoio avisado junto com o alerta (opcional) */}
-      <Text style={styles.label}>Avisar também (opcional)</Text>
+      <Text style={styles.label}>Compartilhar comprovante com (opcional)</Text>
       <View style={styles.opcoes}>
         <TouchableOpacity
           style={[styles.opcao, idContato === null && styles.opcaoAtiva]}
@@ -254,7 +253,7 @@ export default function AcionarSos({ navigation }) {
         style={styles.botaoHistorico}
         onPress={() => navigation.navigate('ListaAlertas')}
       >
-        <Text style={styles.botaoHistoricoText}>Ver histórico de alertas</Text>
+        <Text style={styles.botaoHistoricoText}>Ver extrato</Text>
       </TouchableOpacity>
 
       <Text style={styles.aviso}>Emergência: 190 · Central de Atendimento à Mulher: 180</Text>
