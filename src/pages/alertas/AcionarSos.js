@@ -7,12 +7,91 @@ import { criarAlerta } from '../../services/alertasService';
 import { obterLocalizacao, dataHoraTela, localizacaoTela } from '../../utils/localizacao';
 import { listarContatos } from '../../services/contatosService';
 
-// No navegador, segurar o dedo/mouse em cima do texto "SOS" seleciona o texto e abre
+// No navegador, segurar o dedo/mouse em cima do código seleciona o conteúdo e abre
 // o menu do navegador ("Copiar", "Pesquisar no Google"...). Isso cancela o toque e o
-// botão volta ao normal sem enviar. Estes estilos desligam a seleção e o menu de toque.
+// QR volta ao normal sem enviar. Estes estilos desligam a seleção e o menu de toque.
 const semSelecao = Platform.OS === 'web'
   ? { userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none', touchAction: 'none' }
   : {};
+
+// Disfarce: no lugar de um botão vermelho de SOS, a tela mostra um "QR Code de
+// recebimento", como em qualquer app de finanças. O QR é só um desenho (não
+// codifica nada): uma grade de quadradinhos pretos e brancos, com os três
+// quadrados de canto que todo QR Code tem. Segurar o QR por 2 s envia o SOS.
+const TAMANHO_QR = 25; // quadradinhos por lado
+const CELULA = 8; // tamanho de cada quadradinho em pixels
+
+// Os três quadrados de canto (7x7): borda preta, anel branco e miolo preto
+function ehCanto(linha, coluna) {
+  const cantos = [[0, 0], [0, TAMANHO_QR - 7], [TAMANHO_QR - 7, 0]];
+  return cantos.some(([l0, c0]) => {
+    const l = linha - l0;
+    const c = coluna - c0;
+    if (l < -1 || l > 7 || c < -1 || c > 7) return false;
+    return true;
+  });
+}
+
+function corCanto(linha, coluna) {
+  const cantos = [[0, 0], [0, TAMANHO_QR - 7], [TAMANHO_QR - 7, 0]];
+  for (const [l0, c0] of cantos) {
+    const l = linha - l0;
+    const c = coluna - c0;
+    if (l >= 0 && l < 7 && c >= 0 && c < 7) {
+      const borda = l === 0 || l === 6 || c === 0 || c === 6;
+      const miolo = l >= 2 && l <= 4 && c >= 2 && c <= 4;
+      return borda || miolo;
+    }
+  }
+  return false; // faixa branca em volta dos cantos
+}
+
+// O resto da grade é preenchido de forma "aleatória", mas sempre igual
+// (mesma semente), para o QR não mudar toda vez que a tela abre
+const MATRIZ_QR = (() => {
+  let semente = 20261123;
+  const proximo = () => {
+    semente = (semente * 1103515245 + 12345) % 2147483648;
+    return semente / 2147483648;
+  };
+  return Array.from({ length: TAMANHO_QR }, (_, linha) =>
+    Array.from({ length: TAMANHO_QR }, (_, coluna) =>
+      ehCanto(linha, coluna) ? corCanto(linha, coluna) : proximo() < 0.5
+    )
+  );
+})();
+
+function QrCodeFalso() {
+  return (
+    <View style={estilosQr.qr}>
+      {MATRIZ_QR.map((linha, i) => (
+        <View key={i} style={estilosQr.linha}>
+          {linha.map((preto, j) => (
+            <View key={j} style={[estilosQr.celula, preto && estilosQr.preto]} />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const estilosQr = StyleSheet.create({
+  qr: {
+    width: TAMANHO_QR * CELULA,
+    height: TAMANHO_QR * CELULA,
+    backgroundColor: '#FFFFFF',
+  },
+  linha: {
+    flexDirection: 'row',
+  },
+  celula: {
+    width: CELULA,
+    height: CELULA,
+  },
+  preto: {
+    backgroundColor: '#1A1A1A',
+  },
+});
 
 export default function AcionarSos({ navigation }) {
   const [idContato, setIdContato] = useState(null);
@@ -22,12 +101,12 @@ export default function AcionarSos({ navigation }) {
   const [contatos, setContatos] = useState([]);
   const [segurando, setSegurando] = useState(false);
 
-  // Progresso do "segurar": 0 = acabou de apertar (vermelho escuro),
-  // 1 = completou os 2 segundos (vermelho normal). Parado, fica em 1.
+  // Progresso do "segurar": 0 = acabou de apertar (QR escurecido),
+  // 1 = completou os 2 segundos (QR normal). Parado, fica em 1.
   const progresso = useRef(new Animated.Value(1)).current;
   const botaoRef = useRef(null);
 
-  // No navegador, bloqueia o menu do botão direito / toque longo só em cima do botão
+  // No navegador, bloqueia o menu do botão direito / toque longo só em cima do QR
   useEffect(() => {
     if (Platform.OS !== 'web' || !botaoRef.current) return undefined;
     const no = botaoRef.current;
@@ -36,12 +115,13 @@ export default function AcionarSos({ navigation }) {
     return () => no.removeEventListener('contextmenu', bloquear);
   }, []);
 
-  const corBotao = progresso.interpolate({
+  // Véu escuro por cima do QR: começa forte ao apertar e some em 2 s
+  const opacidadeVeu = progresso.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#5C0F0F', '#C62828'],
+    outputRange: [0.6, 0],
   });
 
-  // Ao apertar: o botão escurece e vai voltando ao vermelho normal em 2 s.
+  // Ao apertar: o QR escurece e vai voltando ao normal em 2 s.
   // Se a animação chegar ao fim (finished), a pessoa segurou o tempo todo: envia o SOS.
   function aoApertar() {
     if (enviando) return;
@@ -58,7 +138,7 @@ export default function AcionarSos({ navigation }) {
   }
 
   // Soltou antes dos 2 s: a animação é interrompida (finished = false)
-  // e o botão volta na hora para a cor normal, sem enviar nada.
+  // e o QR volta na hora ao normal, sem enviar nada.
   function aoSoltar() {
     progresso.stopAnimation();
     progresso.setValue(1);
@@ -79,7 +159,7 @@ export default function AcionarSos({ navigation }) {
     return remover;
   }, [navigation]);
 
-  // O botão só dispara segurando por 2 segundos, para evitar toque sem querer
+  // O QR só dispara segurando por 2 segundos, para evitar toque sem querer
   async function enviarSos() {
     setEnviando(true);
     setErro('');
@@ -100,10 +180,8 @@ export default function AcionarSos({ navigation }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.titulo}>Pedido de ajuda</Text>
-      <Text style={styles.instrucao}>
-        Segure o botão por 2 segundos para enviar um alerta com a sua localização.
-      </Text>
+      <Text style={styles.titulo}>Meu QR Code</Text>
+      <Text style={styles.instrucao}>Use para receber pagamentos via Pix.</Text>
 
       <Pressable
         ref={botaoRef}
@@ -112,22 +190,23 @@ export default function AcionarSos({ navigation }) {
         disabled={enviando}
         style={semSelecao}
       >
-        <Animated.View
-          style={[
-            styles.botaoSos,
-            semSelecao,
-            { backgroundColor: corBotao },
-            enviando && styles.botaoSosDesativado,
-          ]}
-        >
-          {enviando
-            ? <ActivityIndicator color="#FEFDFD" size="large" />
-            : <Text selectable={false} style={[styles.botaoSosText, semSelecao]}>SOS</Text>}
-        </Animated.View>
+        <View style={[styles.cartaoQr, semSelecao, enviando && styles.qrDesativado]}>
+          <QrCodeFalso />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.veu, { opacity: opacidadeVeu }]}
+          />
+          {enviando && (
+            <View style={styles.carregandoQr}>
+              <ActivityIndicator color="#1A1A1A" size="large" />
+            </View>
+          )}
+        </View>
       </Pressable>
 
+      {/* Dica discreta: só quem sabe entende que é o pedido de ajuda */}
       <Text style={styles.dica}>
-        {segurando ? 'Continue segurando...' : 'Toque e segure'}
+        {segurando ? 'Continue segurando...' : 'Chave aleatória · segure o código por 2 s'}
       </Text>
 
       {ultimoAlerta && (
@@ -207,27 +286,33 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 24,
   },
-  botaoSos: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: '#C62828',
+  cartaoQr: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D1CDC7',
+    marginBottom: 8,
+  },
+  veu: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+  },
+  carregandoQr: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 16,
   },
   dica: {
     fontSize: 13,
     color: '#6B6B6B',
     marginBottom: 24,
   },
-  botaoSosDesativado: {
-    opacity: 0.6,
-  },
-  botaoSosText: {
-    color: '#FEFDFD',
-    fontSize: 36,
-    fontWeight: 'bold',
+  qrDesativado: {
+    opacity: 0.8,
   },
   confirmacao: {
     width: '100%',
