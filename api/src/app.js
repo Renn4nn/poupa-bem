@@ -5,6 +5,7 @@ const usuariasRotas = require('./rotas/usuarias');
 const alertasRotas = require('./rotas/alertas');
 const contatosRotas = require('./rotas/contatos');
 const ocorrenciasRotas = require('./rotas/ocorrencias');
+const financasRotas = require('./rotas/financas');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/usuarias', usuariasRotas);
 app.use('/alertas', alertasRotas);
 app.use('/contatos', contatosRotas);
 app.use('/ocorrencias', ocorrenciasRotas);
+app.use('/financas', financasRotas); // fachada financeira (abas antes do PIN)
 
 // Painel web da delegacia: página estática em api/public/painel.html
 // Abrir em http://localhost:3000/painel
